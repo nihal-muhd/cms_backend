@@ -1,13 +1,15 @@
 import express from "express";
 import dotenv from "dotenv";
-import admin from "./routes/admin/admin.js";
 import cors from "cors";
-import connectDB from "./config/db.js";
+import connectDB from "./src/config/db.js";
+import admin from './src/routes/admin/admin.js'
+
+
 
 const app = express();
 connectDB();
 const PORT = 5000;
-dotenv.config({ path: ".env" });
+dotenv.config();
 
 app.use(express.json());
 app.use(cors());

@@ -1,14 +1,16 @@
 import Joi from "joi";
 import bcrypt from "bcrypt";
 import Auth from "../models/auth.js";
+import jwt from 'jsonwebtoken';
+
 
 const authJoi = Joi.object().keys({
-  username: Joi.string().trim().required(),
+  email: Joi.string().trim().required(),
   password: Joi.string().trim().required(),
 });
 
 export const validate = (req, res, next) => {
-  const result = authJoi.validate(req.body);
+  const result = authJoi.validate(req.body.data);
   if (result.error) {
     return res.status(400).send({ message: result.error.message, code: 1 });
   } else {
@@ -18,11 +20,11 @@ export const validate = (req, res, next) => {
 
 export const verify = async (req, res, next) => {
   const auth = await Auth.findOne({
-    username: req.body.username.toLowerCase().trim(),
-    status: true,
+    email: req.body.data.email.toLowerCase().trim(),
+    active: true,
   });
   if (!auth) {
-    return res.status(404).send({ message: "Invalid Username.", code: 2 });
+    return res.status(404).send({ message: "Invalid Email.", code: 2 });
   } else {
     req.body.auth = auth;
     next();
@@ -31,7 +33,7 @@ export const verify = async (req, res, next) => {
 
 export const authenticate = async (req, res, next) => {
   const result = await bcrypt.compare(
-    req.body.password,
+    req.body.data.password,
     req.body.auth.password
   );
   if (result) {
@@ -43,9 +45,9 @@ export const authenticate = async (req, res, next) => {
 
 export const createJwt = (req, res, next) => {
   const token = jwt.sign(
-    { id: req.body.username, crypt: req.body.auth.password },
+    { id: req.body.data.email, crypt: req.body.auth.password },
     process.env.JWT_KEY,
-    { expressIn: "1d" }
+    { expiresIn: "1d" }
   );
   if (token) {
     req.body.token = token;
